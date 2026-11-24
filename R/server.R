@@ -2,16 +2,17 @@ server <- function(input, output, session) {
   selected_location <- reactiveVal(NULL)
 
   output$ucla_map <- renderLeaflet({
-    map
+    add_event_markers(map,events)
   })
 
   output$preview <- renderText({
     paste("Your event:", input$event_title)   ## server reads the current value
   })
 
+  ## Create a new event pin 
   observeEvent(input$ucla_map_click, {
-
-    click <- input$ucla_map_click ## Get the clicked location
+    
+  click <- input$ucla_map_click ## Get the clicked location
 
     selected_location(click)
 
@@ -35,6 +36,17 @@ server <- function(input, output, session) {
       )
   })
 
+  ## Identify the existing events
+  observeEvent(input$ucla_map_marker_click,{
+    click<-input$ucla_map_marker_click
+    
+    if(is.null(click$id)){
+      return()
+    }
+    selected_event<-events[paste0("event_", events$event_id) == click$id,]
+    print (selected_event)
+  })
+  
   output$selected_location <- renderText({
     loc <- selected_location()
     if (is.null(loc)) {
@@ -42,7 +54,8 @@ server <- function(input, output, session) {
     }
     sprintf("Latitude: %.5f, Longitude: %.5f",loc$lat,loc$lng)
   })
-
+  
+  ## Submit Event
   observeEvent(input$submit_event, {
     ## Check validity: The event title should not be empty
     title<- trimws(input$event_title)
